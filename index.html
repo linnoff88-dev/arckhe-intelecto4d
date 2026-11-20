@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>INTELECTO — versões da landpage (índice)</title>
+<meta content="As versões da landpage do workshop INTELECTO — do zero ao seu Jarvis em 2 dias. Workshop ao vivo, inverno, iglu e versão glacial." name="description"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&amp;family=Hanken+Grotesk:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --base: oklch(0.15 0.011 250);
+    --panel: oklch(0.19 0.013 250);
+    --text: oklch(0.96 0.008 250);
+    --muted: oklch(0.75 0.018 250);
+    --faint: oklch(0.62 0.02 250);
+    --ice: oklch(0.82 0.1 226);
+    --ember: oklch(0.72 0.17 52);
+    --line: oklch(0.5 0.02 250 / 0.3);
+    --line-2: oklch(0.6 0.03 250 / 0.55);
+    --ease: cubic-bezier(.2,.7,.2,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-font-smoothing:antialiased}
+  body{background:var(--base);color:var(--text);font-family:'Hanken Grotesk',sans-serif;line-height:1.65;min-height:100vh;
+    background-image:radial-gradient(70% 50% at 80% 0%, oklch(0.6 0.1 226/.06), transparent 60%), radial-gradient(60% 50% at 0% 100%, oklch(0.6 0.14 52/.05), transparent 60%)}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:var(--ice);color:var(--base)}
+  .display{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;letter-spacing:-.015em;line-height:1}
+  .mono{font-family:'JetBrains Mono',monospace;letter-spacing:.04em}
+  .wrap{max-width:960px;margin:0 auto;padding:clamp(48px,9vh,110px) clamp(24px,6vw,40px)}
+
+  header .kick{font-family:'JetBrains Mono';font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:var(--faint);display:flex;align-items:center;gap:12px}
+  header .kick::before{content:"";width:30px;height:1px;background:var(--faint)}
+  header h1{font-size:clamp(2.2rem,6vw,4rem);margin-top:22px;max-width:17ch}
+  header p.sub{color:var(--muted);margin-top:18px;max-width:60ch;font-weight:300;font-size:1.06rem}
+
+  .grid{margin-top:50px;display:grid;gap:14px}
+  @media(min-width:760px){.grid{grid-template-columns:1fr 1fr}}
+  .opt{position:relative;display:flex;flex-direction:column;border:1px solid var(--line-2);border-radius:6px;padding:26px;background:var(--panel);transition:transform .4s var(--ease),border-color .4s}
+  .opt:hover{transform:translateY(-4px)}
+  .opt.warm:hover{border-color:var(--ember)} .opt.cold:hover{border-color:var(--ice)}
+  .opt .file{font-family:'JetBrains Mono';font-size:.68rem;letter-spacing:.04em;color:var(--faint);display:flex;align-items:center;gap:8px}
+  .opt .file .badge{font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;border-radius:99px;border:1px solid oklch(0.82 0.1 226/.45);color:var(--ice)}
+  .opt h2{font-family:'Bricolage Grotesque';font-weight:800;font-size:1.5rem;margin-top:12px;line-height:1.15}
+  .opt p{color:var(--muted);font-size:.92rem;margin-top:8px;font-weight:300;flex:1}
+  .opt .open{margin-top:22px;font-family:'JetBrains Mono';font-size:.76rem;letter-spacing:.06em;text-transform:uppercase}
+  .opt.warm .open{color:var(--ember)} .opt.cold .open{color:var(--ice)}
+
+  .more{margin-top:48px;border-top:1px solid var(--line);padding-top:26px;display:flex;flex-wrap:wrap;gap:10px 26px}
+  .more a{font-family:'JetBrains Mono';font-size:.78rem;color:var(--muted);transition:color .3s}
+  .more a:hover{color:var(--text)}
+  .more .lbl{font-family:'JetBrains Mono';font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);width:100%}
+  footer{color:var(--faint);font-family:'JetBrains Mono';font-size:.74rem;margin-top:54px;border-top:1px solid var(--line);padding-top:24px;display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between}
+  footer a:hover{color:var(--text)}
+</style>
+<link href="https://inematds.github.io/intelecto4d/" hreflang="pt-BR" rel="alternate"/><link href="https://inematds.github.io/intelecto4d/en/" hreflang="en" rel="alternate"/><link href="https://inematds.github.io/intelecto4d/es/" hreflang="es" rel="alternate"/></head>
+<body><div class="inema-lang" style="position:fixed;right:14px;bottom:14px;z-index:9999;display:flex;gap:2px;padding:4px;border-radius:10px;background:rgba(12,12,16,.82);border:1px solid rgba(226,162,59,.45);font:600 12px/1 Sora,Inter,system-ui,sans-serif;backdrop-filter:blur(8px)" translate="no"><a href="./" hreflang="pt-BR" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#1a1206;background:#E2A23B">PT</a><a href="en/" hreflang="en" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#e9e9ee">EN</a><a href="es/" hreflang="es" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#e9e9ee">ES</a></div>
+<div class="wrap">
+<header>
+<p class="kick">INTELECTO · versões da landpage</p>
+<h1 class="display">Do zero ao seu Jarvis em 2 dias.</h1>
+<p class="sub">Quatro versões da landpage do workshop <strong style="color:var(--text);font-weight:500">INTELECTO</strong>. Mesmo conceito — o iglu 3D, frio fora e calor dentro — em quatro vozes visuais. Abra e escolha.</p>
+</header>
+<div class="grid">
+<a class="opt cold" href="workshop.html">
+<div class="file">workshop.html <span class="badge">principal</span></div>
+<h2>Workshop ao vivo · 2 dias</h2>
+<p>A página principal: do zero ao seu Jarvis em dois dias, ao vivo.</p>
+<div class="open">Abrir →</div>
+</a>
+<a class="opt warm" href="inverno.html">
+<div class="file">inverno.html</div>
+<h2>Você se aquece construindo</h2>
+<p>Frio fora, calor dentro: o núcleo do iglu acende em brasa enquanto lá fora neva.</p>
+<div class="open">Abrir →</div>
+</a>
+<a class="opt cold" href="igloo.html">
+<div class="file">igloo.html</div>
+<h2>Inteligência congelada</h2>
+<p>O conceito do iglu 3D — abertura glacial, do zero ao seu Jarvis.</p>
+<div class="open">Abrir →</div>
+</a>
+<a class="opt cold" href="igloo-pro.html">
+<div class="file">igloo-pro.html</div>
+<h2>Experiência glacial</h2>
+<p>Iglu de vidro, câmera que orbita no scroll, paleta gelo de ponta a ponta.</p>
+<div class="open">Abrir →</div>
+</a>
+</div>
+<div class="more">
+<span class="lbl">Mais</span>
+<a href="https://inematds.github.io/intelecto/" style="color:var(--ice)" target="_blank">↗ Projeto INTELECTO (página principal)</a>
+<a href="../critica/index.html">Versões corrigidas pela crítica /impeccable</a>
+<a href="../">Índice geral (todas as pastas)</a>
+</div>
+<footer>
+<span>© <span id="yr"></span> INTELECTO · INEMA</span>
+<span style="display:flex;gap:18px">
+<a href="https://inematds.github.io/intelecto/" style="color:var(--ice)" target="_blank">Projeto INTELECTO ↗</a>
+<a href="https://inema.club" style="color:var(--ice)" target="_blank">INEMA.CLUB</a>
+</span>
+</footer>
+</div>
+<script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+</body>
+</html>

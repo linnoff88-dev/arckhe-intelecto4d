@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>INTELECTO — From zero to your Jarvis · glacial experience</title>
+<meta content="2-day live workshop: build a Jarvis-style assistant, multimodel, with memory and zero-trust security. Online R$487 · In person R$1987." name="description"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&amp;family=Hanken+Grotesk:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --ink:#070a0f; --slate:#383e4e; --frost:#b6bac5; --frost-dim:#8990a0;
+    --ice:#bfeaff; --ice-deep:#6fc4ee; --white:#eef4f9;
+    --glass:rgba(10,15,22,.62); --glass-line:rgba(182,186,197,.16);
+    --ease:cubic-bezier(.2,.7,.2,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-font-smoothing:antialiased}
+  body{background:#aeb9c6;color:var(--white);font-family:'Hanken Grotesk',sans-serif;line-height:1.6;overflow-x:hidden}
+  ::selection{background:var(--ice);color:var(--ink)}
+  a{color:inherit;text-decoration:none}
+  .mono{font-family:'JetBrains Mono',monospace;letter-spacing:.02em}
+  .display{font-family:'Syne',sans-serif;font-weight:800;line-height:.94;letter-spacing:-.02em}
+
+  /* 3D layer (fixed backdrop) */
+  #scene{position:fixed;inset:0;z-index:0;display:block}
+  .scrim{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:linear-gradient(180deg,rgba(7,10,15,.15) 0%,rgba(7,10,15,0) 18%,rgba(7,10,15,0) 78%,rgba(7,10,15,.55) 100%)}
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.06;mix-blend-mode:overlay}
+  .vignette{position:fixed;inset:0;z-index:1;pointer-events:none;box-shadow:inset 0 0 220px 60px rgba(7,10,15,.45)}
+
+  /* content above 3D */
+  .content{position:relative;z-index:5}
+
+  /* loader */
+  #loader{position:fixed;inset:0;z-index:100;background:#0a0e14;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity 1s var(--ease),visibility 1s}
+  #loader.done{opacity:0;visibility:hidden}
+  #loader .lk{font-size:clamp(2rem,7vw,4rem);letter-spacing:.1em;color:var(--white)}
+  #loader .bar{width:min(240px,55vw);height:1px;background:var(--glass-line);overflow:hidden}
+  #loader .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ice),var(--ice-deep))}
+  #loader .pct{font-size:.72rem;letter-spacing:.3em;color:var(--frost-dim)}
+
+  /* HUD */
+  .hud{position:fixed;z-index:6;font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.16em;color:var(--frost);text-transform:uppercase;pointer-events:none;text-shadow:0 1px 12px rgba(0,0,0,.6)}
+  .hud.tl{top:22px;left:24px} .hud.tr{top:22px;right:24px;text-align:right;pointer-events:auto}
+  .hud.bl{bottom:20px;left:24px} .hud.br{bottom:20px;right:24px;text-align:right}
+  .hud.tr a{color:var(--frost)} .hud.tr a:hover{color:var(--white)}
+  .hud .chip{display:inline-block;border:1px solid var(--glass-line);border-radius:4px;padding:4px 8px;background:rgba(10,15,22,.4);backdrop-filter:blur(6px)}
+  .hud.tr .cta{color:var(--ink);background:var(--frost);border-color:transparent}
+  .hud.tr .cta:hover{background:var(--ice)}
+  .progress{position:fixed;left:24px;top:50%;transform:translateY(-50%);z-index:6;height:120px;width:2px;background:var(--glass-line);border-radius:2px;overflow:hidden}
+  .progress i{position:absolute;top:0;left:0;width:100%;height:0;background:linear-gradient(var(--ice),var(--ice-deep))}
+  @media(max-width:720px){.hud.bl,.hud.br,.progress{display:none}}
+
+  /* hero (clear, lets the igloo breathe) */
+  .hero{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 20px}
+  .hero .eyebrow{font-family:'JetBrains Mono';font-size:.7rem;letter-spacing:.34em;text-transform:uppercase;color:var(--ice);text-shadow:0 1px 10px rgba(0,0,0,.6);margin-bottom:22px}
+  .hero h1{font-size:clamp(2.8rem,11vw,8.5rem);text-transform:uppercase;text-shadow:0 6px 40px rgba(0,0,0,.5)}
+  .hero h1 .thin{font-weight:600}
+  .hero .sub{max-width:540px;margin:24px auto 0;color:#dfe7ee;font-weight:300;font-size:clamp(1rem,1.4vw,1.15rem);text-shadow:0 2px 16px rgba(0,0,0,.6)}
+  .hero .cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:36px}
+  .scrollhint{position:absolute;bottom:84px;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono';font-size:.62rem;letter-spacing:.3em;color:var(--frost);text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:8px;text-shadow:0 1px 8px #000}
+  .scrollhint .line{width:1px;height:40px;background:linear-gradient(var(--frost),transparent);animation:drop 2s var(--ease) infinite}
+  @keyframes drop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+  .btn-ice{font-family:'JetBrains Mono';font-size:.78rem;letter-spacing:.04em;color:var(--ink);background:var(--frost);padding:13px 24px;border-radius:999px;transition:all .35s var(--ease);border:1px solid transparent}
+  .btn-ice:hover{background:var(--ice);box-shadow:0 0 34px rgba(191,234,255,.5);transform:translateY(-1px)}
+  .btn-ghost{font-family:'JetBrains Mono';font-size:.78rem;letter-spacing:.04em;color:var(--white);padding:13px 24px;border-radius:999px;border:1px solid var(--glass-line);background:rgba(10,15,22,.35);backdrop-filter:blur(6px);transition:all .35s var(--ease)}
+  .btn-ghost:hover{border-color:var(--frost)}
+
+  /* frosted content column over the scene */
+  .col{max-width:920px;margin:0 auto;padding:0 20px}
+  .panel{background:var(--glass);border:1px solid var(--glass-line);border-radius:24px;backdrop-filter:blur(22px);padding:clamp(30px,5vw,64px);margin:0 auto;box-shadow:0 30px 80px -40px rgba(0,0,0,.7)}
+  section.block{padding:clamp(50px,9vh,110px) 0}
+  .eyebrow2{font-family:'JetBrains Mono';font-size:.7rem;letter-spacing:.32em;text-transform:uppercase;color:var(--ice-deep);display:flex;align-items:center;gap:12px}
+  .eyebrow2::before{content:"";width:30px;height:1px;background:var(--ice-deep)}
+  .h2{font-family:'Syne';font-weight:800;font-size:clamp(1.8rem,5vw,3.2rem);line-height:1.02;letter-spacing:-.02em;margin-top:16px}
+  .lead{color:var(--frost);margin-top:14px;max-width:56ch;font-weight:300}
+  .ice-grad{color:transparent;background:linear-gradient(120deg,var(--ice),var(--frost));-webkit-background-clip:text;background-clip:text}
+
+  .grid{display:grid;gap:16px;margin-top:34px}
+  .g4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+  .g8{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+  .card{background:rgba(182,186,197,.05);border:1px solid var(--glass-line);border-radius:16px;padding:24px;transition:transform .5s var(--ease),border-color .5s,background .5s;position:relative;overflow:hidden}
+  .card:hover{transform:translateY(-5px);border-color:rgba(182,186,197,.34);background:rgba(182,186,197,.09)}
+  .card .ic{font-size:1.6rem}
+  .card h4{font-family:'Syne';font-weight:700;margin-top:12px;font-size:1.02rem}
+  .card p{color:var(--frost-dim);font-size:.88rem;margin-top:7px}
+  .card.mini{padding:18px;text-align:center}
+  .card.mini h4{font-size:.9rem;margin-top:8px}
+  .card.mini span{display:block;color:var(--frost-dim);font-size:.72rem;margin-top:3px;font-family:'JetBrains Mono'}
+  .card .meta{font-family:'JetBrains Mono';font-size:.66rem;color:var(--frost-dim);letter-spacing:.08em;display:flex;justify-content:space-between}
+  .tag{position:absolute;top:16px;right:16px;font-family:'JetBrains Mono';font-size:.6rem;letter-spacing:.12em;color:var(--ice);border:1px solid rgba(191,234,255,.4);border-radius:999px;padding:3px 9px;text-transform:uppercase}
+  .card.feature{border-color:rgba(191,234,255,.38)}
+
+  .steps{display:grid;gap:1px;background:var(--glass-line);border:1px solid var(--glass-line);border-radius:16px;overflow:hidden;margin-top:34px}
+  @media(min-width:820px){.steps{grid-template-columns:repeat(5,1fr)}}
+  .step{background:rgba(10,15,22,.55);padding:24px 20px}
+  .step .n{font-family:'JetBrains Mono';font-size:.72rem;color:var(--ice-deep)}
+  .step .ic{font-size:1.5rem;margin:12px 0 8px}
+  .step h4{font-family:'Syne';font-weight:700;font-size:.95rem}
+  .step p{color:var(--frost-dim);font-size:.8rem;margin-top:5px}
+
+  .split{display:grid;gap:40px}
+  @media(min-width:760px){.split{grid-template-columns:1fr 1fr}}
+  .split h3{font-family:'Syne';font-weight:700;font-size:1.4rem;margin-bottom:16px}
+  .split li{list-style:none;display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--glass-line);color:var(--frost)}
+  .split li .m{color:var(--ice);font-family:'JetBrains Mono'}
+
+  .price-grid{display:grid;gap:18px;margin-top:34px}
+  @media(min-width:760px){.price-grid{grid-template-columns:1fr 1fr}}
+  .pcard{background:rgba(182,186,197,.05);border:1px solid var(--glass-line);border-radius:22px;padding:36px;display:flex;flex-direction:column;position:relative;overflow:hidden;transition:transform .5s var(--ease)}
+  .pcard:hover{transform:translateY(-5px)}
+  .pcard.hot{border-color:rgba(191,234,255,.5);background:linear-gradient(180deg,rgba(191,234,255,.08),rgba(182,186,197,.04))}
+  .pcard .kind{font-family:'JetBrains Mono';font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ice-deep)}
+  .pcard .price{font-family:'Syne';font-weight:800;font-size:clamp(2.4rem,6vw,3.4rem);margin-top:12px}
+  .pcard .note{color:var(--frost-dim);font-size:.86rem;margin-top:4px}
+  .pcard ul{list-style:none;margin:24px 0;display:flex;flex-direction:column;gap:12px;flex:1}
+  .pcard li{display:flex;gap:11px;color:var(--frost);font-size:.92rem}
+  .pcard li .m{color:var(--ice)}
+  .pbadge{position:absolute;top:20px;right:20px;font-family:'JetBrains Mono';font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ice);border:1px solid rgba(191,234,255,.4);border-radius:999px;padding:4px 10px}
+  .btn-block{display:block;text-align:center;padding:15px;border-radius:13px;font-family:'JetBrains Mono';font-size:.84rem;transition:all .35s var(--ease)}
+  .btn-block.solid{background:var(--frost);color:var(--ink)} .btn-block.solid:hover{background:var(--ice);box-shadow:0 0 34px rgba(191,234,255,.45)}
+  .btn-block.outline{border:1px solid var(--glass-line);color:var(--white)} .btn-block.outline:hover{border-color:var(--frost)}
+
+  .faq details{border-bottom:1px solid var(--glass-line);padding:20px 0}
+  .faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:18px;font-family:'Syne';font-weight:700;font-size:1.02rem}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary .pm{color:var(--ice);font-family:'JetBrains Mono';font-size:1.3rem;transition:transform .35s}
+  .faq details[open] summary .pm{transform:rotate(45deg)}
+  .faq p{color:var(--frost);margin-top:12px;max-width:62ch;font-weight:300}
+
+  .final{text-align:center}
+  .final h2{font-family:'Syne';font-weight:800;font-size:clamp(2.2rem,8vw,6rem);text-transform:uppercase;line-height:.96}
+  footer{border-top:1px solid var(--glass-line);margin-top:50px;padding:30px 0;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center;color:var(--frost-dim);font-size:.8rem;font-family:'JetBrains Mono'}
+  footer a:hover{color:var(--white)}
+
+  .rv{opacity:0;transform:translateY(28px);filter:blur(8px);transition:opacity 1s var(--ease),transform 1s var(--ease),filter 1s var(--ease)}
+  .rv.in{opacity:1;transform:none;filter:blur(0)}
+  .rv-d1{transition-delay:.08s}.rv-d2{transition-delay:.16s}.rv-d3{transition-delay:.24s}
+  @media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;filter:none}}
+</style>
+<link href="https://inematds.github.io/intelecto4d/igloo-pro.html" hreflang="pt-BR" rel="alternate"/><link href="https://inematds.github.io/intelecto4d/en/igloo-pro.html" hreflang="en" rel="alternate"/><link href="https://inematds.github.io/intelecto4d/es/igloo-pro.html" hreflang="es" rel="alternate"/></head>
+<body><div class="inema-lang" style="position:fixed;right:14px;bottom:14px;z-index:9999;display:flex;gap:2px;padding:4px;border-radius:10px;background:rgba(12,12,16,.82);border:1px solid rgba(226,162,59,.45);font:600 12px/1 Sora,Inter,system-ui,sans-serif;backdrop-filter:blur(8px)" translate="no"><a href="../igloo-pro.html" hreflang="pt-BR" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#e9e9ee">PT</a><a href="igloo-pro.html" hreflang="en" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#1a1206;background:#E2A23B">EN</a><a href="../es/igloo-pro.html" hreflang="es" style="padding:6px 8px;border-radius:7px;text-decoration:none;color:#e9e9ee">ES</a></div>
+<div id="loader"><div class="lk display">INTELECTO</div><div class="bar"><i id="lbar"></i></div><div class="pct" id="lpct">LOADING 0%</div></div>
+<canvas id="scene"></canvas>
+<div class="scrim"></div>
+<div class="vignette"></div>
+<svg class="grain"><filter id="n"><feturbulence basefrequency="0.8" numoctaves="2" stitchtiles="stitch" type="fractalNoise"></feturbulence></filter><rect filter="url(#n)" height="100%" width="100%"></rect></svg>
+<!-- HUD -->
+<div class="hud tl"><span class="chip">◆ INTELECTO</span>   <span class="chip">EST. INEMA</span></div>
+<div class="hud tr"><a class="chip" href="https://inematds.github.io/intelecto-curso/" target="_blank">SYLLABUS</a>   <a class="chip" href="#precos">PRICING</a>   <a class="chip cta" href="https://inema.vip?plano=online" target="_blank">SAVE YOUR SPOT</a></div>
+<div class="hud bl">LAT 64.1°N · GLACIAL ZONE</div>
+<div class="hud br">WORKSHOP · 02 DAYS · LIVE</div>
+<div class="progress"><i id="prog"></i></div>
+<div class="content">
+<!-- HERO -->
+<header class="hero" id="top">
+<div class="eyebrow">Frozen intelligence</div>
+<h1 class="display">From scratch<br/><span class="thin">to your</span> Jarvis</h1>
+<p class="sub">A personal assistant that is <em>your</em> — multimodel, with memory and real security. You don’t subscribe to intelligence. You build it.</p>
+<div class="cta-row">
+<a class="btn-ice" href="#precos">SAVE MY SPOT →</a>
+<a class="btn-ghost" href="#construir">WHAT YOU BUILD</a>
+</div>
+<div class="scrollhint"><span>scroll to explore the igloo</span><span class="line"></span></div>
+</header>
+<!-- MANIFESTO -->
+<section class="block"><div class="col"><div class="panel rv">
+<div class="eyebrow2">The method</div>
+<h2 class="h2 display">Frameworks are <span class="ice-grad">bloated</span>. Your Jarvis doesn’t have to be.</h2>
+<p class="lead">Most agents trap you in a tower of dependencies and a black box. Here, it’s the opposite: a <strong style="color:var(--white)">feature store</strong>. You choose what goes in, understand each component, and Claude Code builds alongside you — live, in 2 days.</p>
+</div></div></section>
+<!-- 5 PASSOS -->
+<section class="block"><div class="col"><div class="panel rv">
+<div class="eyebrow2">The flow</div>
+<h2 class="h2 display">Five steps until it’s live</h2>
+<div class="steps">
+<div class="step"><div class="n">01</div><div class="ic">🛒</div><h4>Select ingredients</h4><p>Your Jarvis’s features</p></div>
+<div class="step"><div class="n">02</div><div class="ic">📄</div><h4>Generate document</h4><p>ingredients.md</p></div>
+<div class="step"><div class="n">03</div><div class="ic">🤖</div><h4>Switch to Claude Code</h4><p>"Read and build"</p></div>
+<div class="step"><div class="n">04</div><div class="ic">💬</div><h4>Answer questions</h4><p>Docker? Which model?</p></div>
+<div class="step"><div class="n">05</div><div class="ic">🚀</div><h4>Assistant up and running</h4><p>On Telegram, now</p></div>
+</div>
+</div></div></section>
+<!-- CONSTROI -->
+<section class="block" id="construir"><div class="col"><div class="panel rv">
+<div class="eyebrow2">The artifact</div>
+<h2 class="h2 display">What you’ll build</h2>
+<p class="lead">A real assistant — cold, fast, and fortified. Not a demo chatbot.</p>
+<div class="grid g4">
+<div class="card"><div class="ic">💬</div><h4>In your channels</h4><p>Telegram, WhatsApp, Discord, and voice.</p></div>
+<div class="card"><div class="ic">🔗</div><h4>Multiple models</h4><p>OpenRouter (100+) and local Ollama. Switch the brain without rewriting.</p></div>
+<div class="card"><div class="ic">🧠</div><h4>Your own memory</h4><p>SQLite FTS5 + BM25: it remembers you and the context.</p></div>
+<div class="card"><div class="ic">🛡</div><h4>Zero-trust security</h4><p>Anti-prompt injection, crypto, sandbox, and gates.</p></div>
+</div>
+</div></div></section>
+<!-- TRILHAS -->
+<section class="block" id="trilhas"><div class="col"><div class="panel rv">
+<div class="eyebrow2">The content</div>
+<h2 class="h2 display">Six tracks, from zero to expert</h2>
+<p class="lead">Independent, yet connected to the whole. From philosophy to advanced AI security.</p>
+<div class="grid g3">
+<div class="card"><div class="meta"><span>TRACK 01</span><span>~3h · BEGINNER</span></div><h4>Fundamentals</h4><p>No-bloated-framework philosophy, the 5-component architecture, and setup.</p></div>
+<div class="card"><div class="meta"><span>TRACK 02</span><span>~3h · BEGINNER</span></div><h4>Identity and Channels</h4><p>SOUL.md, profiles, Telegram, WhatsApp, Discord, and SQLite memory.</p></div>
+<div class="card feature"><span class="tag">Main</span><div class="meta"><span>TRACK 03</span><span>~5h · ADVANCED</span></div><h4>Zero-Trust Security</h4><p>Prompt injection, Fernet+PBKDF2, WASM sandbox, gates, and audit trail.</p></div>
+<div class="card"><div class="meta"><span>TRACK 04</span><span>~4h · INTERMEDIATE</span></div><h4>Memory and Integrations</h4><p>OpenRouter, Ollama, Google Workspace, GitHub, and webhooks.</p></div>
+<div class="card"><div class="meta"><span>TRACK 05</span><span>~4h · ADVANCED</span></div><h4>Advanced Architectures</h4><p>6 Claw patterns, TinyClaw multi-agent systems, Agent Zero, and continuous learning.</p></div>
+<div class="card"><div class="meta"><span>TRACK 06</span><span>~2h · EXPERT</span></div><h4>Final Project: Your Jarvis</h4><p>Planning, ingredients.md, Docker deployment, monitoring, and roadmap.</p></div>
+</div>
+<div style="margin-top:28px"><a class="btn-ghost" href="https://inematds.github.io/intelecto-curso/" target="_blank">VIEW THE FULL SYLLABUS →</a></div>
+</div></div></section>
+<!-- CORREDORES -->
+<section class="block"><div class="col"><div class="panel rv">
+<div class="eyebrow2">The grocery store</div>
+<h2 class="h2 display">Eight feature tracks</h2>
+<div class="grid g8">
+<div class="card mini"><div class="ic">🧬</div><h4>Identity</h4><span>SOUL.md</span></div>
+<div class="card mini"><div class="ic">🛡</div><h4>Security</h4><span>WASM, gates</span></div>
+<div class="card mini"><div class="ic">💬</div><h4>Channels</h4><span>WhatsApp, voice</span></div>
+<div class="card mini"><div class="ic">🧠</div><h4>Memory</h4><span>SQLite, BM25</span></div>
+<div class="card mini"><div class="ic">⚙</div><h4>Automation</h4><span>Cron, agents</span></div>
+<div class="card mini"><div class="ic">🔗</div><h4>Integrations</h4><span>OpenRouter, MCP</span></div>
+<div class="card mini"><div class="ic">🧰</div><h4>Skills</h4><span>Google, GitHub</span></div>
+<div class="card mini"><div class="ic">🏗</div><h4>Architectures</h4><span>6 Claw patterns</span></div>
+</div>
+</div></div></section>
+<!-- PRA QUEM / PRE-REQ -->
+<section class="block"><div class="col"><div class="panel rv">
+<div class="split">
+<div>
+<h3 class="display">Who it's for</h3>
+<ul>
+<li><span class="m">→</span> People who want an AI assistant <strong style="color:var(--white)">your</strong>, not another subscription.</li>
+<li><span class="m">→</span> Developers and curious learners who want to understand agents for real.</li>
+<li><span class="m">→</span> People who already use AI and want to go from "using" to "building."</li>
+<li><span class="m">→</span> People who care about privacy—and want to run it locally.</li>
+</ul>
+</div>
+<div>
+<h3 class="display">Prerequisites</h3>
+<ul>
+<li><span class="m">·</span> A computer (Windows, Mac, or Linux) and internet access.</li>
+<li><span class="m">·</span> Willingness to work in the terminal — we’ll guide you from the beginning.</li>
+<li><span class="m">·</span> You don’t need to know how to code. Seriously.</li>
+<li><span class="m">·</span> A Telegram account to test.</li>
+</ul>
+</div>
+</div>
+</div></div></section>
+<!-- PRECOS -->
+<section class="block" id="precos"><div class="col"><div class="panel rv">
+<div style="text-align:center">
+<div class="eyebrow2" style="justify-content:center">Registration</div>
+<h2 class="h2 display">Choose how to participate</h2>
+<p class="lead" style="margin:14px auto 0">2 days live, from zero to your Jarvis up and running. Limited spots.</p>
+</div>
+<div class="price-grid">
+<div class="pcard">
+<div class="kind">Online</div><div class="price">R$487</div><div class="note">Live, wherever you are.</div>
+<ul>
+<li><span class="m">✓</span> 2 days of live workshop</li>
+<li><span class="m">✓</span> Access to all 6 tracks and materials</li>
+<li><span class="m">✓</span> Guided assistant building</li>
+<li><span class="m">✓</span> INEMA.VIP Community</li>
+</ul>
+<a class="btn-block outline" href="https://inema.vip?plano=online" target="_blank">I WANT AN ONLINE SPOT</a>
+</div>
+<div class="pcard hot">
+<span class="pbadge">Complete experience</span>
+<div class="kind">In person</div><div class="price">R$1987</div><div class="note">Next cohort · limited spots</div>
+<ul>
+<li><span class="m">✓</span> Everything online, in person</li>
+<li><span class="m">✓</span> Hands-on guidance, right by your side</li>
+<li><span class="m">✓</span> Networking with the group</li>
+<li><span class="m">✓</span> Leave with the assistant running at the end</li>
+</ul>
+<a class="btn-block solid" href="https://inema.vip?plano=presencial" target="_blank">I WANT AN IN-PERSON SPOT</a>
+</div>
+</div>
+<p class="mono" style="text-align:center;color:var(--frost-dim);font-size:.74rem;margin-top:20px">Registration and payment through INEMA.VIP</p>
+</div></div></section>
+<!-- FAQ -->
+<section class="block"><div class="col" style="max-width:780px"><div class="panel rv">
+<div style="text-align:center"><h2 class="h2 display">Frequently asked questions</h2></div>
+<div class="faq" style="margin-top:24px">
+<details><summary>Do I need to know how to code? <span class="pm">+</span></summary><p>No. We start from zero, including setup. Claude Code builds alongside you; your role is to decide what the assistant does.</p></details>
+<details><summary>What's the difference between online and in-person? <span class="pm">+</span></summary><p>The content is the same. In person, you get hands-on guidance by your side and networking. Online, you participate live from wherever you are.</p></details>
+<details><summary>Do I need to pay for AI models? <span class="pm">+</span></summary><p>You’ll learn to use OpenRouter (pay per use, just cents) and local models with Ollama (free, on your machine).</p></details>
+<details><summary>Will I leave the workshop with something ready? <span class="pm">+</span></summary><p>Yes. The goal is to finish with your own assistant working on Telegram, with the features you chose.</p></details>
+<details><summary>Where can I see the full content? <span class="pm">+</span></summary><p>The detailed syllabus is at <a href="https://inematds.github.io/intelecto-curso/" style="color:var(--ice)" target="_blank">inematds.github.io/intelecto-curso</a>.</p></details>
+</div>
+</div></div></section>
+<!-- FINAL -->
+<section class="block final"><div class="col rv">
+<h2 class="display">In 2 days,<br/>your Jarvis is <span class="ice-grad">live</span></h2>
+<p style="color:#dfe7ee;margin:24px auto 0;max-width:46ch;font-weight:300;text-shadow:0 2px 16px rgba(0,0,0,.5)">Stop subscribing to other people's intelligence. Build your own.</p>
+<div class="cta-row" style="display:flex;gap:14px;justify-content:center;margin-top:34px"><a class="btn-ice" href="#precos">SAVE MY SPOT →</a></div>
+<p class="mono" style="color:var(--frost);font-size:.74rem;margin-top:16px;text-shadow:0 1px 8px #000">ONLINE R$487 · IN-PERSON R$1987</p>
+<footer class="col">
+<span>© <span id="yr"></span> INTELECTO · INEMA</span>
+<div style="display:flex;gap:20px">
+<a href="https://inematds.github.io/intelecto-curso/" target="_blank">SYLLABUS</a>
+<a href="#precos">PRICING</a>
+<a href="https://inema.club" style="color:var(--ice-deep)" target="_blank">INEMA.CLUB</a>
+</div>
+</footer>
+</div></section>
+</div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+  "lenis": "https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.mjs"
+}}
+</script>
+<script type="module">
+document.getElementById('yr').textContent = new Date().getFullYear();
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// reveals
+const io = new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
+function finishLoad(){ const l=document.getElementById('loader'); if(l && !l.classList.contains('done')) l.classList.add('done'); }
+
+try {
+  const THREE = await import('three');
+  const { EffectComposer } = await import('three/addons/postprocessing/EffectComposer.js');
+  const { RenderPass } = await import('three/addons/postprocessing/RenderPass.js');
+  const { UnrealBloomPass } = await import('three/addons/postprocessing/UnrealBloomPass.js');
+  const { OutputPass } = await import('three/addons/postprocessing/OutputPass.js');
+  const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
+  let Lenis = null; try { Lenis = (await import('lenis')).default; } catch(_){}
+
+  const COLD_BG = 0x2b323e;   // dark slate dusk (#383e4e family) — text reads, igloo glows
+  const canvas = document.getElementById('scene');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.92;
+  // detect software/GPU-less renderers (SwiftShader/llvmpipe): they blow out bloom+transmission
+  const _gl = renderer.getContext();
+  const _dbg = _gl.getExtension('WEBGL_debug_renderer_info');
+  const _rend = _dbg ? String(_gl.getParameter(_dbg.UNMASKED_RENDERER_WEBGL)) : '';
+  const SOFT = /swiftshader|llvmpipe|software|basic render/i.test(_rend);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(COLD_BG);
+  scene.fog = new THREE.Fog(COLD_BG, 8, 30);
+
+  // environment for glass reflections
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+  const camera = new THREE.PerspectiveCamera(42, innerWidth/innerHeight, .1, 120);
+
+  // ---------- snowy terrain ----------
+  const tGeo = new THREE.PlaneGeometry(160,160,140,140);
+  tGeo.rotateX(-Math.PI/2);
+  const pos = tGeo.attributes.position;
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i), z=pos.getZ(i);
+    const d=Math.hypot(x,z);
+    const ridge = Math.min(1, Math.max(0,(d-9)/40));        // flat near igloo, mountains far
+    let h = Math.sin(x*0.12)*1.1 + Math.cos(z*0.10)*0.9 + Math.sin((x+z)*0.06)*1.6;
+    h += Math.sin(x*0.4+z*0.3)*0.25;
+    pos.setY(i, h*ridge - 1.6 + (Math.random()*0.05));
+  }
+  tGeo.computeVertexNormals();
+  const terrain = new THREE.Mesh(tGeo, new THREE.MeshStandardMaterial({ color:0x8b97a6, roughness:0.96, metalness:0 }));
+  scene.add(terrain);
+
+  // ---------- glass-block igloo ----------
+  const igloo = new THREE.Group();
+  const R = 2.15;
+  const glass = new THREE.MeshPhysicalMaterial({
+    color:0xcfe9f6, metalness:0, roughness:0.12, transmission: SOFT?0:0.9, thickness:1.1, ior:1.34,
+    clearcoat:0.7, clearcoatRoughness:0.25, transparent:true, opacity: SOFT?0.96:1, envMapIntensity:1.3,
+    emissive:0x2a6c8f, emissiveIntensity: SOFT?0.9:0.35, attenuationColor:0x9fd6ef, attenuationDistance:3.0
+  });
+  const edgeMat = new THREE.LineBasicMaterial({ color:0xbfeaff, transparent:true, opacity:0.9 });
+  const rings = [ {phi:8,n:1},{phi:24,n:8},{phi:40,n:12},{phi:56,n:16},{phi:72,n:18},{phi:86,n:20} ];
+  const deg = d=>d*Math.PI/180;
+  rings.forEach((ring,ri)=>{
+    const phi = deg(ring.phi);
+    for(let k=0;k<ring.n;k++){
+      const theta = (k/ring.n)*Math.PI*2 + (ri%2)*0.12;
+      // doorway: skip front-bottom blocks
+      if(ri>=4){ let a=((theta)%(Math.PI*2)); if(a>Math.PI)a-=Math.PI*2; if(Math.abs(a-Math.PI/2)<0.42) continue; }
+      const x=R*Math.sin(phi)*Math.cos(theta), y=R*Math.cos(phi), z=R*Math.sin(phi)*Math.sin(theta);
+      const w = (2*Math.PI*R*Math.max(0.2,Math.sin(phi)))/ring.n * (0.82+Math.random()*0.12);
+      const h = (ri===0? R*0.5 : R*deg(16)) * (0.82+Math.random()*0.16);
+      const blk = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.34), glass);
+      blk.position.set(x,y,z); blk.lookAt(0,0,0);
+      blk.rotateZ(Math.random()*0.1-0.05);
+      igloo.add(blk);
+      const e = new THREE.LineSegments(new THREE.EdgesGeometry(blk.geometry), edgeMat);
+      e.position.copy(blk.position); e.quaternion.copy(blk.quaternion); igloo.add(e);
+    }
+  });
+  igloo.position.y = -1.05;
+  scene.add(igloo);
+
+  // inner cold glow
+  const core = new THREE.PointLight(0x9fe0ff, 12, 11, 2); core.position.set(0,0.2,0); igloo.add(core);
+  const coreOrb = new THREE.Mesh(new THREE.SphereGeometry(0.5,24,24), new THREE.MeshBasicMaterial({color:0xbfeaff})); coreOrb.position.set(0,0.1,0); igloo.add(coreOrb);
+
+  // ---------- lights ----------
+  scene.add(new THREE.HemisphereLight(0xaec3da, 0x2a323d, 0.55));
+  const sun = new THREE.DirectionalLight(0xdfe9f5, 0.85); sun.position.set(8,12,6); scene.add(sun);
+  const rim = new THREE.DirectionalLight(0x7fc3ff, 1.15); rim.position.set(-6,4,-8); scene.add(rim);
+
+  // ---------- falling snow ----------
+  const SN=900, sp=new Float32Array(SN*3);
+  for(let i=0;i<SN;i++){ sp[i*3]=(Math.random()-.5)*60; sp[i*3+1]=Math.random()*30; sp[i*3+2]=(Math.random()-.5)*60; }
+  const snow = new THREE.Points(new THREE.BufferGeometry().setAttribute('position',new THREE.BufferAttribute(sp,3)),
+    new THREE.PointsMaterial({ color:0xffffff, size:0.06, transparent:true, opacity:0.7, depthWrite:false }));
+  scene.add(snow);
+
+  // ---------- postprocessing ----------
+  const composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene,camera));
+  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight), 0.95, 0.7, 0.55);
+  composer.addPass(bloom);
+  composer.addPass(new OutputPass());
+
+  // ---------- smooth scroll ----------
+  let lenis=null;
+  if(Lenis && !reduce){ lenis=new Lenis({ lerp:0.09, smoothWheel:true }); }
+
+  // ---------- scroll-driven camera orbit ----------
+  let mx=0,my=0;
+  addEventListener('pointermove',e=>{ mx=(e.clientX/innerWidth-.5); my=(e.clientY/innerHeight-.5); },{passive:true});
+  const tmp=new THREE.Vector3(), look=new THREE.Vector3(0,-0.6,0);
+  function camFromProgress(p){
+    const az = -0.5 + p*Math.PI*1.7;                 // orbit ~300°
+    const rad = 8.2 - p*3.4;                          // dolly in
+    const hgt = 2.4 - p*1.3 + Math.sin(p*6)*0.15;     // descend
+    tmp.set(Math.cos(az)*rad + mx*1.2, hgt + my*0.6, Math.sin(az)*rad);
+    camera.position.lerp(tmp, 0.06);
+    camera.lookAt(look);
+  }
+  // init far
+  camera.position.set(Math.cos(-0.5)*8.2, 2.4, Math.sin(-0.5)*8.2); camera.lookAt(look);
+
+  function progress(){
+    if(lenis) return lenis.limit? Math.min(1, lenis.scroll/lenis.limit):0;
+    const m=document.documentElement.scrollHeight-innerHeight; return m>0? Math.min(1, scrollY/m):0;
+  }
+  const progBar=document.getElementById('prog');
+
+  function resize(){
+    camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth,innerHeight); composer.setSize(innerWidth,innerHeight);
+  }
+  addEventListener('resize',resize);
+
+  let t=0;
+  function frame(time){
+    if(lenis) lenis.raf(time);
+    t += reduce?0:0.005;
+    const p=progress();
+    camFromProgress(p);
+    igloo.rotation.y = p*0.6 + t*0.05;
+    coreOrb.material.opacity = 0.8; core.intensity = 11 + Math.sin(t*3)*2.5;
+    // snow fall
+    const a=snow.geometry.attributes.position;
+    for(let i=0;i<SN;i++){ let y=a.getY(i)-0.03-(i%5)*0.004; if(y<-2)y=30; a.setY(i,y); a.setX(i,a.getX(i)+0.004); }
+    a.needsUpdate=true;
+    if(progBar) progBar.style.height=(p*100)+'%';
+    if(SOFT) renderer.render(scene,camera); else composer.render();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // loader progress -> done
+  let lp=0; const li=setInterval(()=>{ lp=Math.min(100,lp+Math.random()*22);
+    document.getElementById('lbar').style.width=lp+'%'; document.getElementById('lpct').textContent='CARREGANDO '+Math.round(lp)+'%';
+    if(lp>=100){ clearInterval(li); setTimeout(finishLoad,400);} },180);
+
+} catch(err){
+  console.error('3D init falhou:', err);
+  document.body.style.background='radial-gradient(circle at 50% 30%, #cfe0ee, #6b7686 60%, #2b323e)';
+  finishLoad();
+}
+setTimeout(finishLoad, 7000); // safety
+</script>
+</body>
+</html>
